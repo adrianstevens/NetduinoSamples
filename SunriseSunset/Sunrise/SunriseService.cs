@@ -3,6 +3,12 @@ using System;
 using System.IO;
 using System.Net;
 
+/* Uses the free Sunset and sunrise times API
+ * A free API that provides sunset and sunrise times for a given latitude and longitude.
+ * Please note that attribution is required if you use the API. 
+ * 
+ * https://api.sunrise-sunset.org
+ */
 namespace Sunrise
 {
     public class SunriseService

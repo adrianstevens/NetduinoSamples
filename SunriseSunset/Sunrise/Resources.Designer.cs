@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace MyBlinky
+namespace Sunrise
 {
     
     internal partial class Resources

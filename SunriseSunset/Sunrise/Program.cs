@@ -4,7 +4,7 @@ using Microsoft.SPOT.Hardware;
 using SecretLabs.NETMF.Hardware.Netduino;
 using System.Threading;
 
-namespace MyBlinky
+namespace Sunrise
 {
     public class Program
     {
