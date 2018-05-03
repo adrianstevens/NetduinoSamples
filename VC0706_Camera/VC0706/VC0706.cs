@@ -5,20 +5,20 @@ using System.Threading;
 using System.IO.Ports;
 using Microsoft.SPOT;
 
-namespace netduino.helpers.Hardware
+namespace Camera_VC0706
 {
-    public class VC0706 : IDisposable
+    public class VC0706 : InvalidCastException, IDisposable
     {
         public enum ColorControl : byte
         {
             BlackWhiteColor,
-            Color,  // Does not appear to be supported by the camera
+            Color, 
             BlackWhite
         }
 
-        public enum Proportion : byte
+        public enum PictureScale : byte
         {
-            NoZoom,
+            Normal,
             HalfSize,
             QuarterSize
         }
@@ -87,56 +87,54 @@ namespace netduino.helpers.Hardware
         {
             get
             {
-                return _cameraDelayMilliSec;
+                return _cameraDelay;
             }
             set
             {
-                _cameraDelayMilliSec = value;
-                _comPort.ReadTimeout = _cameraDelayMilliSec * 2;
-                _comPort.WriteTimeout = _cameraDelayMilliSec * 2;
+                _cameraDelay = value;
+                _comPort.ReadTimeout = _cameraDelay * 2;
+                _comPort.WriteTimeout = _cameraDelay * 2;
             }
         }
-        private short _cameraDelayMilliSec;
-
+        short _cameraDelay; //ms
       
-        private int _autoMotionImageSequenceNumber;
-        private string _autoMotionStoragePath;
-        private MotionDetectedHandler _autoMotionDetectionHandler;
-        private Thread _autoMotionThread;
-        private bool _autoMotionStop; // { get; set; }
+        int _motionImageStartingID;
+        string _motionStoragePath;
+        MotionDetectedHandler _motionDetectionHandler;
+        Thread _motionDetectionThread;
+        bool _motionDetectionStop; // { get; set; }
 
+        const int MaxCommandLength = 20;
+        byte[] _command = new byte[MaxCommandLength];
+        int _commandIndex;
 
-        private const int MaxCommandLength = 20;
-        private byte[] _command = new byte[MaxCommandLength];
-        private int _commandIndex;
+        const int MaxResponseLength = 21;
+        byte[] _response = new byte[MaxResponseLength];
 
-        private const int MaxResponseLength = 21;
-        private byte[] _response = new byte[MaxResponseLength];
+        SerialPort _comPort;
+        ManualResetEvent _dataReceivedEvent = new ManualResetEvent(false);
 
-        private SerialPort _comPort;
-        private ManualResetEvent _dataReceivedEvent = new ManualResetEvent(false);
-
-        private const int _bufferSize = 120;
-        private byte[] _frameBuffer = new byte[120];
+        const int FrameBufferSize = 120;
+        byte[] _frameBuffer = new byte[FrameBufferSize];
 
         private const int _timeoutToleranceMilliSec = 50;
 
-        public void Initialize(string port, PortSpeed baudRate, ImageSize imageSize)
+        public void Initialize(string portName, PortSpeed portSpeed, ImageSize imageSize)
         {
-            DetectBaudRate(port);
+            DetectBaudRate(portName);
             SetImageSize(imageSize);
-            DetectBaudRate(port);
-            SetPortSpeed(baudRate);
+            DetectBaudRate(portName);
+            SetPortSpeed(portSpeed);
         }
 
-        protected void DetectBaudRate(string port)
+        protected void DetectBaudRate(string portName)
         {
-            Open(port);
+            Open(portName);
             var baudRates = new int[] { 115200, 57600, 38400, 19200, 9600 };
 
             foreach (var rate in baudRates)
             {
-                Open(port, rate);
+                Open(portName, rate);
                 try
                 {
                     GetImageSize();
@@ -144,18 +142,18 @@ namespace netduino.helpers.Hardware
                 }
                 catch (Exception e)
                 {
-                    Debug.Print("AutoDetect failed @ " + rate.ToString() + ". Exception: " + e.Message);
+                    Debug.Print("DetectBaudRate failed: " + rate.ToString() + ". Exception: " + e.Message);
                 }
-                Shutdown();
+                CloseCommPort();
             }
-            throw new ApplicationException("auto detect failed");
+            throw new ApplicationException("DetectBaudRate() failed");
         }
         
-        protected void Open(string port = "COM1", int baudRate = 38400)
+        protected void Open(string portName = "COM1", int baudRate = 38400)
         {           
-            Shutdown();
+            CloseCommPort();
 
-            _comPort = new SerialPort(port, baudRate, Parity.None, 8, StopBits.One);
+            _comPort = new SerialPort(portName, baudRate, Parity.None, 8, StopBits.One);
             _comPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
             _comPort.ErrorReceived += new SerialErrorReceivedEventHandler(ErrorReceivedHandler);
 
@@ -164,7 +162,7 @@ namespace netduino.helpers.Hardware
             _comPort.Open();
         }
 
-        public void Shutdown()
+        public void CloseCommPort()
         {
             if (_comPort == null)
                 return;
@@ -176,52 +174,55 @@ namespace netduino.helpers.Hardware
             _comPort = null;
         }
                 
-        public void StartAutoMotionDetection(int imageSequenceNumber, string storagePath, MotionDetectedHandler motionDetectionHandler)
+        public void StartMotionDetection(int imageSequenceNumber, string storagePath, MotionDetectedHandler motionDetectionHandler)
         {
-            if (_autoMotionThread != null) throw new ApplicationException("_autoMotionThread");
-            if (motionDetectionHandler == null) throw new ApplicationException("motionDetectionHandler");
+            if (_motionDetectionThread != null)
+                throw new ApplicationException("_autoMotionThread");
 
-            _autoMotionStop = false;
-            _autoMotionImageSequenceNumber = imageSequenceNumber;
-            _autoMotionStoragePath = storagePath;
+            if (motionDetectionHandler == null)
+                throw new ApplicationException("motionDetectionHandler");
 
-            _autoMotionDetectionHandler = motionDetectionHandler;
-            _autoMotionThread = new Thread(AutoMotionDetectionThread);
-            _autoMotionThread.Start();
+            _motionDetectionStop = false;
+            _motionImageStartingID = imageSequenceNumber;
+            _motionStoragePath = storagePath;
+
+            _motionDetectionHandler = motionDetectionHandler;
+            _motionDetectionThread = new Thread(MotionDetectionThread);
+            _motionDetectionThread.Start();
         }
 
         public void StopAutoMotionDetection()
         {
-            if (_autoMotionThread != null)
+            if (_motionDetectionThread != null)
             {
-                _autoMotionStop = true;
-                _autoMotionThread.Join();
-                _autoMotionThread = null;
+                _motionDetectionStop = true;
+                _motionDetectionThread.Join();
+                _motionDetectionThread = null;
             }
         }
 
-        private void AutoMotionDetectionThread()
+        void MotionDetectionThread()
         {
             SetMotionDetection(true);
             string imagePath = "";
 
-            while (!_autoMotionStop)
+            while (!_motionDetectionStop)
             {
                 try
                 {
-                    if (GetMotionDetected())
+                    if (GetMotionDetectedEnabled())
                     {
-                        imagePath = _autoMotionStoragePath + @"\MD_" + _autoMotionImageSequenceNumber.ToString() + ".jpg";
-                        if (_autoMotionDetectionHandler(null, _autoMotionImageSequenceNumber, imagePath))
+                        imagePath = _motionStoragePath + @"\MD_" + _motionImageStartingID.ToString() + ".jpg";
+                        if (_motionDetectionHandler(null, _motionImageStartingID, imagePath))
                         {
                             TakePicture(imagePath);
-                            _autoMotionImageSequenceNumber++;
+                            _motionImageStartingID++;
                         }
                     }
                 }
                 catch (Exception e)
                 {
-                    _autoMotionDetectionHandler(e, _autoMotionImageSequenceNumber, imagePath);
+                    _motionDetectionHandler(e, _motionImageStartingID, imagePath);
                 }
             }
             SetMotionDetection(false);
@@ -239,7 +240,7 @@ namespace netduino.helpers.Hardware
             return (_response[5] == 1) ? true : false;
         }
 
-        public bool GetMotionDetected()
+        public bool GetMotionDetectedEnabled()
         {
             if (ReadResponse(4, false) != 0)
             {
@@ -253,7 +254,8 @@ namespace netduino.helpers.Hardware
             RunCommand(Command.MOTION_CTRL, new byte[] {(byte) x, (byte) d1, (byte) d2}, 5);
         }
 
-        public void SetColorControl(ColorControl color) {
+        public void SetColorControl(ColorControl color)
+        {
             RunCommand(Command.COLOR_CTRL, new byte[] { 0x1, (byte)color }, 5);
         }
 
@@ -278,34 +280,39 @@ namespace netduino.helpers.Hardware
             Reset();
         }
 
-        public void GetDownSize(out Proportion width, out Proportion height)
+        public void GetDownScaleSize(out PictureScale width, out PictureScale height)
         {
             RunCommand(Command.DOWNSIZE_STATUS, null, 6);
             var temp = _response[5];
             temp &= 0x3;
-            width = (Proportion)temp;
+            width = (PictureScale)temp;
             temp = _response[5];
             temp >>= 4;
             temp &= 0x3;
-            height = (Proportion)temp;
+            height = (PictureScale)temp;
         }
 
-        public byte GetDownSize() {
+        public byte GetDownScaleSize()
+        {
             RunCommand(Command.DOWNSIZE_STATUS, null, 6);
             return _response[5];
         }
 
-        public void SetDownSize(Proportion width, Proportion height) {
+        public void SetDownScaleSize(PictureScale width, PictureScale height)
+        {
             byte size = (byte)(((byte)height & 0x3) << 4);
             size |= (byte)((byte)width & 0x3);
+
+            SetDownScaleSize(size);
+        }
+
+        public void SetDownScaleSize(byte size)
+        {
             RunCommand(Command.DOWNSIZE_CTRL, new byte[] { size }, 5);
         }
 
-        public void SetDownSize(byte downSize) {
-            RunCommand(Command.DOWNSIZE_CTRL, new byte[] { downSize }, 5);
-        }
-
-        public string GetVersion() {
+        public string GetVersion()
+        {
             RunCommand(Command.GEN_VERSION, new byte[] { 0x01 }, 16);
             Array.Copy(_response, 5, _response, 0, 11);
             _response[12] = _response[13] = 0;
@@ -313,16 +320,19 @@ namespace netduino.helpers.Hardware
             return new string(encoding.GetChars(_response));
         }
 
-        public byte GetCompression() {
+        public byte GetCompression()
+        {
             RunCommand(Command.READ_DATA, new byte[] { 0x1, 0x1, 0x12, 0x04 }, 6);
             return _response[5];
         }
         
-        public void SetCompression(byte compression) {
+        public void SetCompression(byte compression)
+        {
             RunCommand(Command.WRITE_DATA, new byte[] {0x1, 0x1, 0x12, 0x04, compression}, 5);
         }
 
-        public enum PortSpeed {
+        public enum PortSpeed
+        {
             Baud9600 = 0xAEC8,
             Baud19200 = 0x56E4,
             Baud38400 = 0x2AF2,
@@ -330,26 +340,13 @@ namespace netduino.helpers.Hardware
             Baud115200 = 0x0DA6
         }
 
-        protected void SetPortSpeed(PortSpeed speed) {
+        protected void SetPortSpeed(PortSpeed speed)
+        {
             RunCommand(Command.SET_PORT, new byte[] { 0x1, (byte)((short)speed >> 8), (byte)((short)speed & 0xFF) }, 5);
-            var comPortName = _comPort.PortName;
-            switch (speed) {
-                case PortSpeed.Baud9600:
-                    Open(comPortName, 9600);
-                    break;
-                case PortSpeed.Baud19200:
-                    Open(comPortName, 19200);
-                    break;
-                case PortSpeed.Baud38400:
-                    Open(comPortName, 38400);
-                    break;
-                case PortSpeed.Baud57600:
-                    Open(comPortName, 57600);
-                    break;
-                case PortSpeed.Baud115200:
-                    Open(comPortName, 115200);
-                    break;
-            }
+            var portName = _comPort.PortName;
+
+            Open(portName, (int)speed);
+
             Thread.Sleep(100);
         }
 
@@ -498,7 +495,7 @@ namespace netduino.helpers.Hardware
 
         public void Dispose()
         {
-            Shutdown();
+            CloseCommPort();
 
             _command = null;
             _response = null;
@@ -523,10 +520,14 @@ namespace netduino.helpers.Hardware
 
             while (expectedResponseLength > 0)
             {
-                if (WaitForIncomingData(GetTimeout(_response.Length)) == false) {
-                    if (throwExceptionOnTimeout) throw new ApplicationException("Timeout");
-                    else break;
+                if (WaitForIncomingData(GetTimeout(_response.Length)) == false)
+                {
+                    if (throwExceptionOnTimeout)
+                        throw new ApplicationException("Timeout");
+                    else
+                        break;
                 }
+
                 var bytesRead = _comPort.Read(_response, responseIndex, expectedResponseLength);
                 responseLength += bytesRead;
                 expectedResponseLength -= bytesRead;

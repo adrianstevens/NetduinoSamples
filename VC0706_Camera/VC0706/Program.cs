@@ -6,7 +6,7 @@ namespace Camera_VC0706
 {
     public class Program
     {
-        public static netduino.helpers.Hardware.VC0706 Camera = new netduino.helpers.Hardware.VC0706();
+        public static VC0706 Camera = new VC0706();
 
         public static void Main()
         {
@@ -16,16 +16,14 @@ namespace Camera_VC0706
 
             RecurseFolders(new DirectoryInfo("SD"));
 
-            Camera.Initialize("COM1", netduino.helpers.Hardware.VC0706.PortSpeed.Baud38400, netduino.helpers.Hardware.VC0706.ImageSize.Res640x480);
+            Camera.Initialize("COM1", VC0706.PortSpeed.Baud38400, VC0706.ImageSize.Res640x480);
 
             Camera.SetTVOut(false);
 
             ShowCameraConfigTest();
 
-            Camera.Initialize("COM1", netduino.helpers.Hardware.VC0706.PortSpeed.Baud115200, netduino.helpers.Hardware.VC0706.ImageSize.Res160x120);
-            TakePictureStressTest(@"SD\StressTestSmall", 100);
-
-
+            Camera.Initialize("COM1", VC0706.PortSpeed.Baud115200, VC0706.ImageSize.Res160x120);
+            TestTakePictures(@"SD\StressTestSmall", 100);
 
             Camera.SetTVOut(true);
         }
@@ -72,7 +70,7 @@ namespace Camera_VC0706
             //ShowCameraColorControlMode();
         }
 
-        public static void TakePictureStressTest(string path, int maxCount = 100)
+        public static void TestTakePictures(string path, int maxCount = 100)
         {
             Directory.CreateDirectory(path);
             for (var count = 0; count < maxCount; count++)
