@@ -1,11 +1,14 @@
 using System;
 using Microsoft.SPOT;
 
-namespace VC0706
+namespace Camera_VC0706
 {
     public interface ICamera
     {
         void TakePicture(string path);
+
+        void Initialize();
+
         string GetVersion();
     }
 }
