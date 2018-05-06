@@ -1,7 +1,7 @@
 using System;
 using Microsoft.SPOT;
 
-namespace Camera_VC0706
+namespace Netduino.Hardware.Sensors.Camera
 {
     public class ViewPort
     {

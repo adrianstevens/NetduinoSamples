@@ -1,6 +1,7 @@
 ﻿using Microsoft.SPOT;
 using Microsoft.SPOT.IO;
 using System.IO;
+using Netduino.Fountation.Sensors.Camera;
 
 namespace Camera_VC0706
 {
@@ -12,17 +13,17 @@ namespace Camera_VC0706
         {
             Debug.Print("hello");
 
-           var volume = new VolumeInfo("SD");
+            var volume = new VolumeInfo("SD");
 
             RecurseFolders(new DirectoryInfo("SD"));
 
-            Camera.Initialize("COM1", VC0706.PortSpeed.Baud38400, VC0706.ImageSize.Res640x480);
+            Camera.Initialize("COM1", VC0706.PortSpeed.Baud38400, VC0706.Resolution._640x480);
 
             Camera.SetTVOut(false);
 
             ShowCameraConfigTest();
 
-            Camera.Initialize("COM1", VC0706.PortSpeed.Baud115200, VC0706.ImageSize.Res160x120);
+            Camera.Initialize("COM1", VC0706.PortSpeed.Baud115200, VC0706.Resolution._160x120);
             TestTakePictures(@"SD\StressTestSmall", 100);
 
             Camera.SetTVOut(true);

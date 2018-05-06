@@ -1,11 +1,10 @@
-using System;
-using Microsoft.SPOT;
-
-namespace Camera_VC0706
+namespace Netduino.Fountation.Sensors.Camera
 {
     public interface ICamera
     {
-        void TakePicture(string path);
+        bool IsInitialized { get; set; }
+
+        bool TakePicture(string path);
 
         void Initialize();
 

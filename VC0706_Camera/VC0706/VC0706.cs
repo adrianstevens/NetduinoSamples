@@ -5,10 +5,12 @@ using System.Threading;
 using System.IO.Ports;
 using Microsoft.SPOT;
 
-namespace Camera_VC0706
+namespace Netduino.Fountation.Sensors.Camera
 {
     public class VC0706 : ICamera, IDisposable
     {
+        #region Enums
+
         public enum PortSpeed
         {
             Baud9600 = 0xAEC8,
@@ -25,12 +27,37 @@ namespace Camera_VC0706
             BlackWhite
         }
 
-        public enum PictureScale : byte
+        public enum ImageScale : byte
         {
-            Normal,
-            HalfSize,
-            QuarterSize
+            Full,
+            Half,
+            Quarter
         }
+
+        public enum Resolution : byte
+        {
+            _640x480 = 0x00,
+            _320x240 = 0x11,
+            _160x120 = 0x22,
+        }
+
+        #endregion
+
+        #region Constants
+
+        const byte CameraSerial = 0x0;
+        const byte CommandSend = 0x56;
+        const byte CommandReply = 0x76;
+
+        const byte ReplyIndex = 0;
+        const byte ReplySerialIndex = 1;
+        const byte ReplyCommandIndex = 2;
+        const byte ReplyStatusIndex = 3;
+
+        const int MaxCommandLength = 20;
+        const int MaxResponseLength = 21;
+        const int FrameBufferSize = 120;
+        const int CameraTimeOutPadding = 50; //ms
 
         protected enum Command : byte
         {
@@ -59,7 +86,7 @@ namespace Camera_VC0706
             MOTION_CTRL = 0x42,
             MOTION_STATUS = 0x43,
             TV_OUT_CTRL = 0x44,
-            OSD_ADD_CHAR = 0x45, // not supported on the VC0706
+            OSD_ADD_CHAR = 0x45, // not supported
             DOWNSIZE_SIZE_SET = 0x52,
             DOWNSIZE_SIZE_GET = 0x53,
             DOWNSIZE_CTRL = 0x54,
@@ -82,15 +109,34 @@ namespace Camera_VC0706
             UART_MOTION = 0x01,
             ACTIVATE_MOTION = 0x01,
         }
-        
-        public enum ImageSize: byte
-        {
-            Res640x480 = 0x00,
-            Res320x240 = 0x11,
-            Res160x120 = 0x22,
-        }
 
-        public delegate bool MotionDetectedHandler(Exception e, int imageSequenceNumber, string imagePath);
+        #endregion
+
+        #region Member variables / fields
+
+        MotionDetectedHandler _motionDetectionHandler;
+        Thread _motionDetectionThread;
+        bool _motionDetectionStarted;
+        int _motionImageStartID;
+        string _motionStoragePath;
+
+        byte[] _command = new byte[MaxCommandLength];
+        byte[] _response = new byte[MaxResponseLength];
+        byte[] _frameBuffer = new byte[FrameBufferSize];
+
+        SerialPort _comPort;
+        ManualResetEvent _dataReceivedEvent = new ManualResetEvent(false);
+
+        #endregion
+
+        #region Properties
+
+        public bool IsInitialized
+        {
+            get { return _isInitialized; }
+            set { _isInitialized = value; }
+        }
+        bool _isInitialized = false;
 
         protected short CameraDelay
         {
@@ -103,34 +149,23 @@ namespace Camera_VC0706
             }
         }
         short _cameraDelay; //ms
-      
-        int _motionImageStartID;
-        string _motionStoragePath;
-        MotionDetectedHandler _motionDetectionHandler;
-        Thread _motionDetectionThread;
-        bool _motionDetectionStarted;
 
-        const int MaxCommandLength = 20;
-        byte[] _command = new byte[MaxCommandLength];
-        int _commandIndex;
+        #endregion
 
-        const int MaxResponseLength = 21;
-        byte[] _response = new byte[MaxResponseLength];
+        #region Events and delegates
 
-        const int FrameBufferSize = 120;
-        byte[] _frameBuffer = new byte[FrameBufferSize];
+        public delegate bool MotionDetectedHandler(Exception e, int imageId, string imagePath);
 
-        const int TimeOutPadding = 50; //ms
+        #endregion
 
-        SerialPort _comPort;
-        ManualResetEvent _dataReceivedEvent = new ManualResetEvent(false);
+        #region Methods
 
         public void Initialize()
         {
-            Initialize("COM1", PortSpeed.Baud38400, ImageSize.Res640x480);
+            Initialize("COM1", PortSpeed.Baud38400, Resolution._640x480);
         }
 
-        public void Initialize(string portName, PortSpeed portSpeed, ImageSize imageSize)
+        public void Initialize(string portName, PortSpeed portSpeed, Resolution imageSize)
         {
             DetectBaudRate(portName);
             SetImageSize(imageSize);
@@ -157,21 +192,23 @@ namespace Camera_VC0706
                 }
                 CloseCommPort();
             }
-            throw new ApplicationException("DetectBaudRate() failed");
+            throw new ApplicationException("DetectBaudRate() failed - is the camera connected?");
         }
 
-        public void TakePicture(string path)
+        public bool TakePicture(string path)
         {
+            if (IsInitialized == false)
+                return false;
+
             FreezeFrame();
 
             var frameAddress = 0;
             var frameLength = GetFrameLength();
 
-            Debug.Print("Frame length: " + frameLength.ToString());
-
             using (var picFS = new FileStream(path, FileMode.Create, FileAccess.Write))
             {
                 var totalBytesRead = 0;
+
                 while (frameLength > 0)
                 {
                     var segmentLength = System.Math.Min(frameLength, _frameBuffer.Length);
@@ -180,12 +217,15 @@ namespace Camera_VC0706
                     frameLength -= segmentLength;
                     frameAddress += segmentLength;
                 }
+
                 Debug.Print("Total bytes read: " + totalBytesRead.ToString());
                 picFS.Flush();
                 picFS.Close();
             }
             ReadResponse(5);
             ResumeFrame();
+
+            return true;
         }
 
         protected void OpenCommPort(string portName = "COM1", int baudRate = 38400)
@@ -307,28 +347,28 @@ namespace Camera_VC0706
             currentColor = (ColorControl) _response[7];
         }
 
-        public ImageSize GetImageSize()
+        public Resolution GetImageSize()
         {
             RunCommand(Command.READ_DATA, new byte[] { 0x4, 0x1, 0x00, 0x19 }, 6);
-            return (ImageSize) _response[5];
+            return (Resolution) _response[5];
         }
 
-        protected void SetImageSize(ImageSize size)
+        protected void SetImageSize(Resolution size)
         {
             RunCommand(Command.WRITE_DATA, new byte[] { 0x04, 0x01, 0x00, 0x19, (byte)size }, 5);
             Reset();
         }
 
-        public void GetDownScaleSize(out PictureScale width, out PictureScale height)
+        public void GetDownScaleSize(out ImageScale width, out ImageScale height)
         {
             RunCommand(Command.DOWNSIZE_STATUS, null, 6);
             var temp = _response[5];
             temp &= 0x3;
-            width = (PictureScale)temp;
+            width = (ImageScale)temp;
             temp = _response[5];
             temp >>= 4;
             temp &= 0x3;
-            height = (PictureScale)temp;
+            height = (ImageScale)temp;
         }
 
         public byte GetDownScaleSize()
@@ -337,7 +377,7 @@ namespace Camera_VC0706
             return _response[5];
         }
 
-        public void SetDownScaleSize(PictureScale width, PictureScale height)
+        public void SetDownScaleSize(ImageScale width, ImageScale height)
         {
             byte size = (byte)(((byte)height & 0x3) << 4);
             size |= (byte)((byte)width & 0x3);
@@ -484,7 +524,7 @@ namespace Camera_VC0706
       
         int GetTimeout(int bufferLength) //ms
         {
-            var timeout = ((bufferLength / (_comPort.BaudRate >> 3)) * 1000) + CameraDelay + TimeOutPadding;
+            var timeout = ((bufferLength / (_comPort.BaudRate >> 3)) * 1000) + CameraDelay + CameraTimeOutPadding;
             return timeout;
         }
 
@@ -532,11 +572,7 @@ namespace Camera_VC0706
             return responseLength;
         }
 
-        const byte CommandReply = 0x76;
-        const byte ReplyIndex = 0;
-        const byte ReplySerialIndex = 1;
-        const byte ReplyCommandIndex = 2;
-        const byte ReplyStatusIndex = 3;
+
 
         protected bool VerifyResponse(Command command)
         {
@@ -562,27 +598,24 @@ namespace Camera_VC0706
             return true;
         }
 
-        const byte CameraSerial = 0;
-        const byte CommandSend = 0x56;
-
         protected void SendCommand(Command command, byte[] args)
         {
-            _commandIndex = 0;
-            _command[_commandIndex++] = CommandSend;
-            _command[_commandIndex++] = CameraSerial;
-            _command[_commandIndex++] = (byte)command;
+            var index = 0;
+            _command[index++] = CommandSend;
+            _command[index++] = CameraSerial;
+            _command[index++] = (byte)command;
 
             var argsLength = 0;
 
             if (args != null)
             {
                 argsLength = args.Length;
-                _command[_commandIndex++] = (byte)argsLength;
-                Array.Copy(args, 0, _command, _commandIndex, argsLength);
+                _command[index++] = (byte)argsLength;
+                Array.Copy(args, 0, _command, index, argsLength);
             }
             else
             {
-                _command[_commandIndex++] = 0;
+                _command[index++] = 0;
             }
             _comPort.Write(_command, 0, argsLength + 4);
         }
@@ -605,5 +638,7 @@ namespace Camera_VC0706
             _frameBuffer = null;
             _dataReceivedEvent = null;
         }
+
+        #endregion
     }
 }
