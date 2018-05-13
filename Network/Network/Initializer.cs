@@ -139,13 +139,6 @@ namespace Netduino.Foundation.Network
 
                     Debug.Print("Got an IP Address: " + networkInterface.IPAddress.ToString());
                     return true;
-
-                    //NOTE: this does not work, even though it's on the actual network device. [shrug]
-                    // try to renew the DHCP lease and get a new IP Address
-                    //net.RenewDhcpLease ();
-                    //while (net.IPAddress == "0.0.0.0") {
-                    //    Thread.Sleep (10);
-                    //}
                 }
                 else
                 {
