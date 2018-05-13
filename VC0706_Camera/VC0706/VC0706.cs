@@ -184,15 +184,15 @@ namespace Netduino.Fountation.Sensors.Camera
                 try
                 {
                     GetImageSize();
+                    Debug.Print("DetectBaudRate succeeded: " + rate.ToString());
                     return;
                 }
                 catch (Exception e)
                 {
-                    Debug.Print("DetectBaudRate failed: " + rate.ToString() + ". Exception: " + e.Message);
                 }
                 CloseCommPort();
             }
-            throw new ApplicationException("DetectBaudRate() failed - is the camera connected?");
+            throw new ApplicationException("DetectBaudRate failed: is the camera connected?");
         }
 
         public bool TakePicture(string path)
@@ -640,5 +640,15 @@ namespace Netduino.Fountation.Sensors.Camera
         }
 
         #endregion
+    }
+}
+
+namespace System.Diagnostics
+{
+    public enum DebuggerBrowsableState
+    {
+        Never = 0,
+        Collapsed = 2,
+        RootHidden = 3
     }
 }
