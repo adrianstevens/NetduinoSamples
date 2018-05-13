@@ -65,9 +65,6 @@ namespace Netduino.Foundation.Network
                         {
                             MakeWebRequest(uri);
 
-                            if (NetworkConnected != null)
-                                NetworkConnected.Invoke(null, EventArgs.Empty);
-
                             return (true);
                         }
                         catch (Exception e)
@@ -138,6 +135,9 @@ namespace Netduino.Foundation.Network
                     }
 
                     Debug.Print("Got an IP Address: " + networkInterface.IPAddress.ToString());
+
+                    if (NetworkConnected != null)
+                        NetworkConnected.Invoke(null, EventArgs.Empty);
                     return true;
                 }
                 else
@@ -149,6 +149,10 @@ namespace Netduino.Foundation.Network
             else
             {
                 Debug.Print("Already have an IP Address: " + networkInterface.IPAddress.ToString());
+
+                if (NetworkConnected != null)
+                    NetworkConnected.Invoke(null, EventArgs.Empty);
+
                 return true;
             }
         }
