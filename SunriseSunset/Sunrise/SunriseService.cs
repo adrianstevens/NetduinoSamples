@@ -18,9 +18,13 @@ namespace Sunrise
         {
         }
 
-        public SunriseData GetSunriseSunset(double latitude, double longitude)
+        public SunriseData GetSunriseSunset(double latitude, double longitude, DateTime date)
         {
-            var url = SunriseSunsetServiceUrl + "/json?lat=" + latitude + "&lng=" + longitude + "&date=today";
+            string dateParam;
+
+            dateParam = date.Year + "-" + date.Month + "-" + date.Day;
+
+            var url = SunriseSunsetServiceUrl + "/json?lat=" + latitude + "&lng=" + longitude + "&date=" + dateParam;
 
             var json = MakeWebRequest(url);
 
@@ -39,6 +43,11 @@ namespace Sunrise
             };
 
             return result;
+        }
+
+        public SunriseData GetSunriseSunset(double latitude, double longitude)
+        {
+            return GetSunriseSunset(latitude, longitude, DateTime.Now); 
         }
 
         DateTime TimeStringToDateTime(string time)
