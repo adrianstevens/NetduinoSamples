@@ -5,7 +5,7 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VC0706", "VC0706\VC0706.csproj", "{19F0E08F-85DE-4433-9309-D9F26C72B84A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VC0706_MapleServer", "VC0706_MapleServer\VC0706_MapleServer.csproj", "{845DF6C8-A68C-4198-990F-C207829597FB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VC0706_MapleServer", "VC0706_MapleServer\VC0706_MapleServer.csproj", "{7F87F286-8D50-4A70-A1E0-1DCD6769839F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,12 +19,12 @@ Global
 		{19F0E08F-85DE-4433-9309-D9F26C72B84A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19F0E08F-85DE-4433-9309-D9F26C72B84A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{19F0E08F-85DE-4433-9309-D9F26C72B84A}.Release|Any CPU.Deploy.0 = Release|Any CPU
-		{845DF6C8-A68C-4198-990F-C207829597FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{845DF6C8-A68C-4198-990F-C207829597FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{845DF6C8-A68C-4198-990F-C207829597FB}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
-		{845DF6C8-A68C-4198-990F-C207829597FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{845DF6C8-A68C-4198-990F-C207829597FB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{845DF6C8-A68C-4198-990F-C207829597FB}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{7F87F286-8D50-4A70-A1E0-1DCD6769839F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F87F286-8D50-4A70-A1E0-1DCD6769839F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F87F286-8D50-4A70-A1E0-1DCD6769839F}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{7F87F286-8D50-4A70-A1E0-1DCD6769839F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F87F286-8D50-4A70-A1E0-1DCD6769839F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F87F286-8D50-4A70-A1E0-1DCD6769839F}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

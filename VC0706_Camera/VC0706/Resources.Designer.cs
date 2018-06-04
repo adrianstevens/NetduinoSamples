@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Camera_VC0706
+namespace VC0706
 {
     
     internal partial class Resources
@@ -20,7 +20,7 @@ namespace Camera_VC0706
             {
                 if ((Resources.manager == null))
                 {
-                    Resources.manager = new System.Resources.ResourceManager("Camera_VC0706.Resources", typeof(Resources).Assembly);
+                    Resources.manager = new System.Resources.ResourceManager("VC0706.Resources", typeof(Resources).Assembly);
                 }
                 return Resources.manager;
             }

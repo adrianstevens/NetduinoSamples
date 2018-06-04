@@ -1,13 +1,12 @@
 ﻿using Microsoft.SPOT;
 using Microsoft.SPOT.IO;
 using System.IO;
-using Netduino.Fountation.Sensors.Camera;
 
 namespace Camera_VC0706
 {
     public class Program
     {
-        public static VC0706 Camera = new VC0706();
+        public static CameraVC0706 Camera = new CameraVC0706();
 
         public static void Main()
         {
@@ -17,16 +16,16 @@ namespace Camera_VC0706
 
             RecurseFolders(new DirectoryInfo("SD"));
 
-            Camera.Initialize("COM1", VC0706.PortSpeed.Baud38400, VC0706.Resolution._640x480);
+            Camera.Initialize("COM1");
 
-            Camera.SetTVOut(false);
+            Camera.SetTVOutput(false);
 
             ShowCameraConfigTest();
 
-            Camera.Initialize("COM1", VC0706.PortSpeed.Baud115200, VC0706.Resolution._160x120);
-            TestTakePictures(@"SD\StressTestSmall", 100);
+            Camera.Initialize("COM1", CameraVC0706.ComPortSpeed.Baud115200, CameraVC0706.ImageSize.Res160x120);
+            TakePictureStressTest(@"SD\StressTestSmall", 100);
 
-            Camera.SetTVOut(true);
+            Camera.SetTVOutput(true);
         }
 
         static void RecurseFolders(DirectoryInfo directory)
@@ -59,19 +58,19 @@ namespace Camera_VC0706
             ushort pan = 0;
             ushort tilt = 0;
 
-            Camera.GetPanTiltZoom(out width, out height, out zoomWidth, out zoomHeight, out pan, out tilt);
+          /*  Camera.GetPanTiltZoom(out width, out height, out zoomWidth, out zoomHeight, out pan, out tilt);
 
             Debug.Print("PTZ width: " + width.ToString());
             Debug.Print("PTZ height: " + height.ToString());
             Debug.Print("PTZ zoomWidth: " + zoomWidth.ToString());
             Debug.Print("PTZ zoomHeight: " + zoomHeight.ToString());
             Debug.Print("PTZ pan: " + pan.ToString());
-            Debug.Print("PTZ tilt: " + tilt.ToString());
+            Debug.Print("PTZ tilt: " + tilt.ToString()); */
 
             //ShowCameraColorControlMode();
         }
 
-        public static void TestTakePictures(string path, int maxCount = 100)
+        public static void TakePictureStressTest(string path, int maxCount = 100)
         {
             Directory.CreateDirectory(path);
             for (var count = 0; count < maxCount; count++)
@@ -82,5 +81,15 @@ namespace Camera_VC0706
                 Camera.TakePicture(imgPath);
             }
         }
+    }
+}
+
+namespace System.Diagnostics
+{
+    public enum DebuggerBrowsableState
+    {
+        Never = 0,
+        Collapsed = 2,
+        RootHidden = 3
     }
 }
