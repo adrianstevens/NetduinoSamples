@@ -37,6 +37,8 @@
     <Compile Include="EdpIf.cs" />
     <Compile Include="Epd1in54.cs" />
     <Compile Include="EpdPaint.cs" />
+    <Compile Include="Font12.cs" />
+    <Compile Include="Fonts.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Resources.Designer.cs">

@@ -3,10 +3,10 @@ namespace WaveShare_EInk
     public class EpdPaint
     {
         // Display orientation
-        readonly int ROTATE_0 = 0;
-        readonly int ROTATE_90 = 1;
-        readonly int ROTATE_180 = 2;
-        readonly int ROTATE_270 = 3;
+        public static readonly int ROTATE_0 = 0;
+        public static readonly int ROTATE_90 = 1;
+        public static readonly int ROTATE_180 = 2;
+        public static readonly int ROTATE_270 = 3;
 
         // Color inverse. 1 or 0 = set or reset a bit if set a colored pixel
         int IF_INVERT_COLOR = 1;
@@ -16,7 +16,7 @@ namespace WaveShare_EInk
         int height;
         int rotate;
 
-        void Paint(byte[] image, int width, int height)
+        public EpdPaint(byte[] image, int width, int height)
         {
             this.rotate = ROTATE_0;
             this.image = image;
@@ -25,7 +25,7 @@ namespace WaveShare_EInk
             this.height = height;
         }
 
-        void Clear(int colored)
+        public void Clear(int colored)
         {
             for (int x = 0; x < width; x++)
             {
@@ -36,7 +36,7 @@ namespace WaveShare_EInk
             }
         }
 
-        void DrawAbsolutePixel(int x, int y, int colored)
+        public void DrawAbsolutePixel(int x, int y, int colored)
         {
             if (x < 0 || x >= this.width || y < 0 || y >= this.height)
             {
@@ -66,37 +66,37 @@ namespace WaveShare_EInk
             }
         }
 
-        byte[] GetImage()
+        public byte[] GetImage()
         {
             return this.image;
         }
 
-        int GetWidth()
+        public int GetWidth()
         {
             return this.width;
         }
 
-        void SetWidth(int width)
+        public void SetWidth(int width)
         {
             this.width = (width % 8 > 0) ? width + 8 - (width % 8) : width;
         }
 
-        int GetHeight()
+        public int GetHeight()
         {
             return this.height;
         }
 
-        void SetHeight(int height)
+        public void SetHeight(int height)
         {
             this.height = height;
         }
 
-        int GetRotate()
+        public int GetRotate()
         {
             return this.rotate;
         }
 
-        void SetRotate(int rotate)
+        public void SetRotate(int rotate)
         {
             this.rotate = rotate;
         }
@@ -104,7 +104,7 @@ namespace WaveShare_EInk
         /**
          *  @brief: this draws a pixel by the coordinates
          */
-        void DrawPixel(int x, int y, int colored)
+        public void DrawPixel(int x, int y, int colored)
         {
             int point_temp;
             if (this.rotate == ROTATE_0)
@@ -153,7 +153,7 @@ namespace WaveShare_EInk
         /**
         *  @brief: this draws a line on the frame buffer
         */
-        void DrawLine(int x0, int y0, int x1, int y1, int colored)
+        public void DrawLine(int x0, int y0, int x1, int y1, int colored)
         {
             /* Bresenham algorithm */
             int dx = x1 - x0 >= 0 ? x1 - x0 : x0 - x1;
@@ -205,7 +205,7 @@ namespace WaveShare_EInk
         /**
         *  @brief: this draws a rectangle
         */
-        void DrawRectangle(int x0, int y0, int x1, int y1, int colored)
+        public void DrawRectangle(int x0, int y0, int x1, int y1, int colored)
         {
             int min_x, min_y, max_x, max_y;
             min_x = x1 > x0 ? x0 : x1;
