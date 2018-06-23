@@ -183,37 +183,41 @@ namespace Simone
             leds[index].IsOn = false;
         }
 
-        private static void OnButton0(uint data1, uint data2, DateTime time)
+
+        static DateTime lastPressed;
+        private static void OnButton(int buttonIndex)
         {
+            foreach (var btn in buttons)
+                btn.ClearInterrupt();
+
+            if (DateTime.Now - lastPressed < TimeSpan.FromTicks(5000000)) //0.5s
+                return;
+
+            Debug.Print("Button tapped: " + buttonIndex);
+
             if (isAnimating == false)
             {
-                game.EnterStep(0);
-                TurnOnLED(0);
+                lastPressed = DateTime.Now;
+                game.EnterStep(buttonIndex);
+                TurnOnLED(buttonIndex);
             }
+        }
+
+        private static void OnButton0(uint data1, uint data2, DateTime time)
+        {
+            OnButton(0);
         }
         private static void OnButton1(uint data1, uint data2, DateTime time)
         {
-            if(isAnimating == false)
-            {
-                game.EnterStep(1);
-                TurnOnLED(1);
-            }
+            OnButton(1);
         }
         private static void OnButton2(uint data1, uint data2, DateTime time)
         {
-            if (isAnimating == false)
-            { 
-                game.EnterStep(2);
-                TurnOnLED(2);
-            }
+            OnButton(2);
         }
         private static void OnButton3(uint data1, uint data2, DateTime time)
         {
-            if (isAnimating == false)
-            { 
-                game.EnterStep(3);
-                TurnOnLED(3);
-            }
+            OnButton(3);
         }
     }
 }
