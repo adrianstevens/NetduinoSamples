@@ -14,6 +14,7 @@ namespace Simone
 
         static Led[] leds = new Led[4];
         static InterruptPort[] buttons = new InterruptPort[4];
+        static PiezoSpeaker speaker;
 
         static bool isAnimating = false;
 
@@ -37,23 +38,28 @@ namespace Simone
 
         private static void OnGameStateChanged(object sender, SimonEventArgs e)
         {
-            switch (e.GameState)
+            var th = new Thread(() =>
             {
-                case GameState.Start:
-                    
-                    break;
-                case GameState.NextLevel:
-                    ShowStartAnimation();
-                    ShowNextLevelAnimation(game.Level);
-                    ShowSequenceAnimation(game.Level);
-                    break;
-                case GameState.GameOver:
-                    ShowGameOverAnimation();
-                    break;
-                case GameState.Win:
-                    ShowGameWonAnimation();
-                    break;
-            }
+
+                switch (e.GameState)
+                {
+                    case GameState.Start:
+
+                        break;
+                    case GameState.NextLevel:
+                        ShowStartAnimation();
+                        ShowNextLevelAnimation(game.Level);
+                        ShowSequenceAnimation(game.Level);
+                        break;
+                    case GameState.GameOver:
+                        ShowGameOverAnimation();
+                        break;
+                    case GameState.Win:
+                        ShowGameWonAnimation();
+                        break;
+                }
+            });
+            th.Start();
         }
 
         static void Initialize()
@@ -72,6 +78,8 @@ namespace Simone
             buttons[1].OnInterrupt += OnButton1;
             buttons[2].OnInterrupt += OnButton2;
             buttons[3].OnInterrupt += OnButton3;
+
+            speaker = new PiezoSpeaker(Cpu.Pin.GPIO_Pin9);
 
             SetAllLEDs(false);
         }
@@ -140,9 +148,9 @@ namespace Simone
 
             for (int i = 0; i < level; i++)
             {
-                Thread.Sleep(100);
+                Thread.Sleep(200);
                 leds[steps[i]].IsOn = true;
-                Thread.Sleep(400);
+                Thread.Sleep(500);
                 SetAllLEDs(false);
             }
 
@@ -179,7 +187,7 @@ namespace Simone
         {
             SetAllLEDs(false);
             leds[index].IsOn = true;
-            Thread.Sleep(100);
+            Thread.Sleep(200);
             leds[index].IsOn = false;
         }
 
@@ -187,8 +195,8 @@ namespace Simone
         static DateTime lastPressed;
         private static void OnButton(int buttonIndex)
         {
-            foreach (var btn in buttons)
-                btn.ClearInterrupt();
+        //    foreach (var btn in buttons)
+        //        btn.ClearInterrupt();
 
             if (DateTime.Now - lastPressed < TimeSpan.FromTicks(5000000)) //0.5s
                 return;
