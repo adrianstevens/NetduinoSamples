@@ -13,6 +13,7 @@ namespace Simone
         static int ANIMATION_DELAY = 200;
 
         static Led[] leds = new Led[4];
+        static float[] notes = new float[] {261.63f, 329.63f, 392, 523.25f };
         static InterruptPort[] buttons = new InterruptPort[4];
         static PiezoSpeaker speaker;
 
@@ -22,9 +23,11 @@ namespace Simone
 
         public static void Main()
         {
-            Debug.Print(Resources.GetString(Resources.StringResources.String1));
+            Debug.Print("Welcome to Simon");
 
             Initialize();
+
+            SetAllLEDs(true);
 
             game.OnGameStateChanged += OnGameStateChanged;
 
@@ -40,11 +43,9 @@ namespace Simone
         {
             var th = new Thread(() =>
             {
-
                 switch (e.GameState)
                 {
                     case GameState.Start:
-
                         break;
                     case GameState.NextLevel:
                         ShowStartAnimation();
@@ -53,6 +54,7 @@ namespace Simone
                         break;
                     case GameState.GameOver:
                         ShowGameOverAnimation();
+                        game.Reset();
                         break;
                     case GameState.Win:
                         ShowGameWonAnimation();
@@ -64,22 +66,27 @@ namespace Simone
 
         static void Initialize()
          { 
-            leds[0] = new Led(N.Pins.GPIO_PIN_D0);
-            leds[1] = new Led(N.Pins.GPIO_PIN_D1);
-            leds[2] = new Led(N.Pins.GPIO_PIN_D2);
-            leds[3] = new Led(N.Pins.GPIO_PIN_D3);
+            leds[0] = new Led(N.Pins.GPIO_PIN_D10);
+            leds[1] = new Led(N.Pins.GPIO_PIN_D11);
+            leds[2] = new Led(N.Pins.GPIO_PIN_D12);
+            leds[3] = new Led(N.Pins.GPIO_PIN_D13);
 
-            buttons[0] = new InterruptPort(N.Pins.GPIO_PIN_D10, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
-            buttons[1] = new InterruptPort(N.Pins.GPIO_PIN_D11, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
-            buttons[2] = new InterruptPort(N.Pins.GPIO_PIN_D12, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
-            buttons[3] = new InterruptPort(N.Pins.GPIO_PIN_D13, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
-
+            buttons[0] = new InterruptPort(N.Pins.GPIO_PIN_D0, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
+            buttons[1] = new InterruptPort(N.Pins.GPIO_PIN_D1, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
+            buttons[2] = new InterruptPort(N.Pins.GPIO_PIN_D2, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
+            buttons[3] = new InterruptPort(N.Pins.GPIO_PIN_D3, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
+            
             buttons[0].OnInterrupt += OnButton0;
             buttons[1].OnInterrupt += OnButton1;
             buttons[2].OnInterrupt += OnButton2;
             buttons[3].OnInterrupt += OnButton3;
 
-            speaker = new PiezoSpeaker(Cpu.Pin.GPIO_Pin9);
+            speaker = new PiezoSpeaker(N.Pins.GPIO_PIN_D5);
+
+          /*  speaker.Play(261.63f, 500);
+            speaker.Play(329.63f, 500);
+            speaker.Play(392, 500);
+            speaker.Play(523.25f, 500); */
 
             SetAllLEDs(false);
         }
@@ -106,6 +113,7 @@ namespace Simone
                 leds[i].IsOn = true;
                 Thread.Sleep(ANIMATION_DELAY);
             }
+
             for (int i = 0; i < 4; i++)
             {
                 leds[3 - i].IsOn = false;
@@ -149,9 +157,7 @@ namespace Simone
             for (int i = 0; i < level; i++)
             {
                 Thread.Sleep(200);
-                leds[steps[i]].IsOn = true;
-                Thread.Sleep(500);
-                SetAllLEDs(false);
+                TurnOnLED(steps[i], 500);
             }
 
             isAnimating = false;
@@ -163,6 +169,8 @@ namespace Simone
                 return;
 
             isAnimating = true;
+
+            speaker.Play(123.47f, 750);
 
             for (int i = 0; i < 20; i++)
             {
@@ -183,11 +191,11 @@ namespace Simone
             ShowStartAnimation();
         }
 
-        private static void TurnOnLED(int index)
+        private static void TurnOnLED(int index, int durration = 500)
         {
-            SetAllLEDs(false);
             leds[index].IsOn = true;
-            Thread.Sleep(200);
+
+            speaker.Play(notes[index], durration);
             leds[index].IsOn = false;
         }
 
@@ -195,9 +203,6 @@ namespace Simone
         static DateTime lastPressed;
         private static void OnButton(int buttonIndex)
         {
-        //    foreach (var btn in buttons)
-        //        btn.ClearInterrupt();
-
             if (DateTime.Now - lastPressed < TimeSpan.FromTicks(5000000)) //0.5s
                 return;
 
@@ -206,8 +211,10 @@ namespace Simone
             if (isAnimating == false)
             {
                 lastPressed = DateTime.Now;
-                game.EnterStep(buttonIndex);
+
                 TurnOnLED(buttonIndex);
+
+                game.EnterStep(buttonIndex);
             }
         }
 
