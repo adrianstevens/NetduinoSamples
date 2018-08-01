@@ -157,7 +157,7 @@ namespace Simone
             for (int i = 0; i < level; i++)
             {
                 Thread.Sleep(200);
-                TurnOnLED(steps[i], 500);
+                TurnOnLED(steps[i], 400);
             }
 
             isAnimating = false;
@@ -170,7 +170,7 @@ namespace Simone
 
             isAnimating = true;
 
-            speaker.Play(123.47f, 750);
+            speaker.PlayTone(123.47f, 750);
 
             for (int i = 0; i < 20; i++)
             {
@@ -191,11 +191,11 @@ namespace Simone
             ShowStartAnimation();
         }
 
-        private static void TurnOnLED(int index, int durration = 500)
+        private static void TurnOnLED(int index, int durration = 400)
         {
             leds[index].IsOn = true;
 
-            speaker.Play(notes[index], durration);
+            speaker.PlayTone(notes[index], durration);
             leds[index].IsOn = false;
         }
 
