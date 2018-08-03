@@ -3,16 +3,12 @@ using Microsoft.SPOT.Hardware;
 
 public class PiezoSpeaker : IToneGenerator
 {
-    private SecretLabs.NETMF.Hardware.PWM _pin;
-
+    private PWM _pwm;
     private bool _isPlaying = false;
 
-    public PiezoSpeaker(Cpu.Pin pin)
+    public PiezoSpeaker(Cpu.PWMChannel pwmChannel)
     {
-        _pin = new SecretLabs.NETMF.Hardware.PWM(pin);
-
-        // silence the piezo
-        _pin.SetDutyCycle(0);
+        _pwm = new PWM(pwmChannel, 100, 0, false);
     }
 
     /// <summary>
@@ -27,11 +23,15 @@ public class PiezoSpeaker : IToneGenerator
             _isPlaying = true;
 
             var period = (uint)(1000000 / frequency);
-            _pin.SetPulse(period, period / 2);
+
+            _pwm.Period = period;
+            _pwm.Duration = period / 2;
+            _pwm.Start();
 
             Thread.Sleep(duration);
 
-            _pin.SetDutyCycle(0);
+            _pwm.Stop();
+
             _isPlaying = false;
         }
     }

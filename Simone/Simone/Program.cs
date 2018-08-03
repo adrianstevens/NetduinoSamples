@@ -81,7 +81,7 @@ namespace Simone
             buttons[2].OnInterrupt += OnButton2;
             buttons[3].OnInterrupt += OnButton3;
 
-            speaker = new PiezoSpeaker(N.Pins.GPIO_PIN_D5);
+            speaker = new PiezoSpeaker(N.PWMChannels.PWM_PIN_D5);
 
           /*  speaker.Play(261.63f, 500);
             speaker.Play(329.63f, 500);
