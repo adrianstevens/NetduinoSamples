@@ -5,6 +5,7 @@ using Microsoft.SPOT.Hardware;
 using Netduino.Foundation.LEDs;
 using N = SecretLabs.NETMF.Hardware.Netduino;
 using NF = Netduino.Foundation;
+using Netduino.Foundation.Piezos;
 
 namespace Simone
 {
@@ -34,6 +35,8 @@ namespace Simone
             Debug.Print("Welcome to Metronome");
 
             Initialize();
+
+            ShowStartAnimation();
 
             while (true)
             {
@@ -135,17 +138,6 @@ namespace Simone
 
             isAnimating = false;
         }
-
-
-        //ToDo remove
-        private static void TurnOnLED(int index, int durration = 400)
-        {
-            leds[index].IsOn = true;
-
-            speaker.PlayTone(notes[index], durration);
-            leds[index].IsOn = false;
-        }
-
 
         private static void OnButton0(uint data1, uint data2, DateTime time)
         {
