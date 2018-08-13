@@ -4,7 +4,7 @@ using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
 using Netduino.Foundation.LEDs;
 using N = SecretLabs.NETMF.Hardware.Netduino;
-using NF = Netduino.Foundation;
+using Netduino.Foundation.Piezos;
 
 namespace Simone
 {
@@ -82,11 +82,6 @@ namespace Simone
             buttons[3].OnInterrupt += OnButton3;
 
             speaker = new PiezoSpeaker(N.PWMChannels.PWM_PIN_D5);
-
-          /*  speaker.Play(261.63f, 500);
-            speaker.Play(329.63f, 500);
-            speaker.Play(392, 500);
-            speaker.Play(523.25f, 500); */
 
             SetAllLEDs(false);
         }
