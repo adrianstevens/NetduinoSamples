@@ -2,9 +2,9 @@ using System;
 using System.Threading;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
-using Netduino.Foundation.LEDs;
 using N = SecretLabs.NETMF.Hardware.Netduino;
-using Netduino.Foundation.Piezos;
+using Netduino.Foundation.LEDs;
+using Netduino.Foundation.Audio;
 
 namespace Metronome
 {
@@ -40,15 +40,15 @@ namespace Metronome
 
         private void InitializePeripherals()
         {
-            leds[0] = new Led(N.Pins.GPIO_PIN_D10);
-            leds[1] = new Led(N.Pins.GPIO_PIN_D11);
-            leds[2] = new Led(N.Pins.GPIO_PIN_D12);
-            leds[3] = new Led(N.Pins.GPIO_PIN_D13);
+            leds[0] = new Led(N.Pins.GPIO_PIN_D0);
+            leds[1] = new Led(N.Pins.GPIO_PIN_D1);
+            leds[2] = new Led(N.Pins.GPIO_PIN_D2);
+            leds[3] = new Led(N.Pins.GPIO_PIN_D3);
 
-            buttons[0] = new InterruptPort(N.Pins.GPIO_PIN_D0, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
-            buttons[1] = new InterruptPort(N.Pins.GPIO_PIN_D1, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
-            buttons[2] = new InterruptPort(N.Pins.GPIO_PIN_D2, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
-            buttons[3] = new InterruptPort(N.Pins.GPIO_PIN_D3, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
+            buttons[0] = new InterruptPort(N.Pins.GPIO_PIN_D10, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
+            buttons[1] = new InterruptPort(N.Pins.GPIO_PIN_D11, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
+            buttons[2] = new InterruptPort(N.Pins.GPIO_PIN_D12, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
+            buttons[3] = new InterruptPort(N.Pins.GPIO_PIN_D13, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
 
             buttons[0].OnInterrupt += OnButton0;
             buttons[1].OnInterrupt += OnButton1;

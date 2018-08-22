@@ -51,8 +51,8 @@
     <Reference Include="Microsoft.SPOT.IO" />
     <Reference Include="Microsoft.SPOT.Native" />
     <Reference Include="Microsoft.SPOT.TinyCore" />
-    <Reference Include="Netduino.Foundation, Version=0.19.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Netduino.Foundation.0.19.684\lib\netmf43\Netduino.Foundation.dll</HintPath>
+    <Reference Include="Netduino.Foundation, Version=0.21.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Netduino.Foundation.0.21.702\lib\netmf43\Netduino.Foundation.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="SecretLabs.NETMF.Hardware, Version=4.3.1.0, Culture=neutral, processorArchitecture=MSIL" />
