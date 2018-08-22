@@ -2,9 +2,9 @@ using System;
 using System.Threading;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
-using Netduino.Foundation.LEDs;
 using N = SecretLabs.NETMF.Hardware.Netduino;
-using Netduino.Foundation.Piezos;
+using Netduino.Foundation.LEDs;
+using Netduino.Foundation.Audio;
 
 namespace Simone
 {
