@@ -1,25 +1,25 @@
 using System;
 using System.Threading;
 using Microsoft.SPOT;
-using Microsoft.SPOT.Hardware;
 using N = SecretLabs.NETMF.Hardware.Netduino;
 using Netduino.Foundation.LEDs;
 using Netduino.Foundation.Audio;
+using Netduino.Foundation.Sensors.Buttons;
 
 namespace Simone
 {
     public class App
     {
-         int ANIMATION_DELAY = 200;
+        int ANIMATION_DELAY = 200;
 
-         Led[] leds = new Led[4];
-         float[] notes = new float[] { 261.63f, 329.63f, 392, 523.25f };
-         InterruptPort[] buttons = new InterruptPort[4];
-         PiezoSpeaker speaker;
+        Led[] leds = new Led[4];
+        float[] notes = new float[] { 261.63f, 329.63f, 392, 523.25f };
+        PushButton[] buttons = new PushButton[4];
+        PiezoSpeaker speaker;
 
-         bool isAnimating = false;
+        bool isAnimating = false;
 
-         SimonGame game = new SimonGame();
+        SimonGame game = new SimonGame();
 
         public void Run()
         {
@@ -41,15 +41,15 @@ namespace Simone
             leds[2] = new Led(N.Pins.GPIO_PIN_D2);
             leds[3] = new Led(N.Pins.GPIO_PIN_D3);
 
-            buttons[0] = new InterruptPort(N.Pins.GPIO_PIN_D10, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
-            buttons[1] = new InterruptPort(N.Pins.GPIO_PIN_D11, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
-            buttons[2] = new InterruptPort(N.Pins.GPIO_PIN_D12, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
-            buttons[3] = new InterruptPort(N.Pins.GPIO_PIN_D13, true, Port.ResistorMode.PullDown, Port.InterruptMode.InterruptEdgeHigh);
+            buttons[0] = new PushButton(N.Pins.GPIO_PIN_D10, Netduino.Foundation.CircuitTerminationType.High);
+            buttons[1] = new PushButton(N.Pins.GPIO_PIN_D11, Netduino.Foundation.CircuitTerminationType.High);
+            buttons[2] = new PushButton(N.Pins.GPIO_PIN_D12, Netduino.Foundation.CircuitTerminationType.High);
+            buttons[3] = new PushButton(N.Pins.GPIO_PIN_D13, Netduino.Foundation.CircuitTerminationType.High);
 
-            buttons[0].OnInterrupt += OnButton0;
-            buttons[1].OnInterrupt += OnButton1;
-            buttons[2].OnInterrupt += OnButton2;
-            buttons[3].OnInterrupt += OnButton3;
+            buttons[0].PressStarted += OnButton0;
+            buttons[1].PressStarted += OnButton1;
+            buttons[2].PressStarted += OnButton2;
+            buttons[3].PressStarted += OnButton3;
 
             speaker = new PiezoSpeaker(N.PWMChannels.PWM_PIN_D5);
 
@@ -208,19 +208,19 @@ namespace Simone
             }
         }
 
-        private void OnButton0(uint data1, uint data2, DateTime time)
+        private void OnButton0(object sender, EventArgs e)
         {
             OnButton(0);
         }
-        private void OnButton1(uint data1, uint data2, DateTime time)
+        private void OnButton1(object sender, EventArgs e)
         {
             OnButton(1);
         }
-        private void OnButton2(uint data1, uint data2, DateTime time)
+        private void OnButton2(object sender, EventArgs e)
         {
             OnButton(2);
         }
-        private void OnButton3(uint data1, uint data2, DateTime time)
+        private void OnButton3(object sender, EventArgs e)
         {
             OnButton(3);
         }
