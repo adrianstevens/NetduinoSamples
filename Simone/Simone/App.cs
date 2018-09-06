@@ -5,6 +5,9 @@ using N = SecretLabs.NETMF.Hardware.Netduino;
 using Netduino.Foundation.LEDs;
 using Netduino.Foundation.Audio;
 using Netduino.Foundation.Sensors.Buttons;
+using Netduino.Foundation.Displays;
+using Netduino.Foundation.Sensors.Switches;
+using System.Collections;
 
 namespace Simone
 {
@@ -16,16 +19,20 @@ namespace Simone
         float[] notes = new float[] { 261.63f, 329.63f, 392, 523.25f };
         PushButton[] buttons = new PushButton[4];
         PiezoSpeaker speaker;
+        SpdtSwitch spdt;
+        GraphicsLibrary display;
 
         bool isAnimating = false;
 
         SimonGame game = new SimonGame();
 
+        ArrayList messageQue = new ArrayList();
+
         public void Run()
         {
-            Debug.Print("Welcome to Simon");
-
             InitializePeripherals();
+
+            DisplayMessage("Simone!");
 
             SetAllLEDs(true);
 
@@ -36,10 +43,10 @@ namespace Simone
 
         private void InitializePeripherals()
         {
-            leds[0] = new Led(N.Pins.GPIO_PIN_D0);
-            leds[1] = new Led(N.Pins.GPIO_PIN_D1);
-            leds[2] = new Led(N.Pins.GPIO_PIN_D2);
-            leds[3] = new Led(N.Pins.GPIO_PIN_D3);
+            leds[0] = new Led(N.Pins.GPIO_PIN_D4);
+            leds[1] = new Led(N.Pins.GPIO_PIN_D5);
+            leds[2] = new Led(N.Pins.GPIO_PIN_D6);
+            leds[3] = new Led(N.Pins.GPIO_PIN_D7);
 
             buttons[0] = new PushButton(N.Pins.GPIO_PIN_D10, Netduino.Foundation.CircuitTerminationType.High);
             buttons[1] = new PushButton(N.Pins.GPIO_PIN_D11, Netduino.Foundation.CircuitTerminationType.High);
@@ -51,7 +58,9 @@ namespace Simone
             buttons[2].PressStarted += OnButton2;
             buttons[3].PressStarted += OnButton3;
 
-            speaker = new PiezoSpeaker(N.PWMChannels.PWM_PIN_D5);
+            speaker = new PiezoSpeaker(N.PWMChannels.PWM_PIN_D3);
+            spdt = new SpdtSwitch(N.Pins.GPIO_PIN_D2);
+            display = new GraphicsLibrary(new SSD1306(0x3c, 400, SSD1306.DisplayType.OLED128x64));
 
             SetAllLEDs(false);
         }
@@ -63,13 +72,18 @@ namespace Simone
                 switch (e.GameState)
                 {
                     case GameState.Start:
+                        DisplayMessage("Are you ready?");
                         break;
                     case GameState.NextLevel:
+                        if(game.Level > 2)
+                            DisplayMessage("Nice work!");
                         ShowStartAnimation();
                         ShowNextLevelAnimation(game.Level);
+                        DisplayMessage("Level " + (game.Level - 1));
                         ShowSequenceAnimation(game.Level);
                         break;
                     case GameState.GameOver:
+                        DisplayMessage("Game over :(");
                         ShowGameOverAnimation();
                         game.Reset();
                         break;
@@ -147,7 +161,7 @@ namespace Simone
             for (int i = 0; i < level; i++)
             {
                 Thread.Sleep(200);
-                TurnOnLED(steps[i], 400);
+                ShowGameStep(steps[i], 400);
             }
 
             isAnimating = false;
@@ -160,7 +174,8 @@ namespace Simone
 
             isAnimating = true;
 
-            speaker.PlayTone(123.47f, 750);
+            if(spdt.IsOn)
+                speaker.PlayTone(123.47f, 750);
 
             for (int i = 0; i < 20; i++)
             {
@@ -181,15 +196,17 @@ namespace Simone
             ShowStartAnimation();
         }
 
-        private void TurnOnLED(int index, int durration = 400)
+        private void ShowGameStep(int index, int durration = 400)
         {
             leds[index].IsOn = true;
 
-            speaker.PlayTone(notes[index], durration);
+            if (spdt.IsOn)
+                speaker.PlayTone(notes[index], durration);
+            else
+                Thread.Sleep(durration);
             leds[index].IsOn = false;
         }
-
-
+        
          DateTime lastPressed;
         private void OnButton(int buttonIndex)
         {
@@ -202,7 +219,7 @@ namespace Simone
             {
                 lastPressed = DateTime.Now;
 
-                TurnOnLED(buttonIndex);
+                ShowGameStep(buttonIndex);
 
                 game.EnterStep(buttonIndex);
             }
@@ -223,6 +240,34 @@ namespace Simone
         private void OnButton3(object sender, EventArgs e)
         {
             OnButton(3);
+        }
+
+        private void DisplayMessage(string message)
+        {
+            messageQue.Add(message);
+
+            if (messageQue.Count != 1)
+                return;
+
+            while (messageQue.Count > 0)
+            {
+                DrawText((string)messageQue[messageQue.Count - 1]);
+                messageQue.RemoveAt(0);
+                Thread.Sleep(1000);
+            }
+        }
+
+        private void DrawText(string message)
+        {
+            if (display != null)
+            {
+                display.Clear(true);
+                display.CurrentFont = new Font8x8();
+                display.DrawText(0, 0, 0, message);
+                display.Show();
+            }
+
+            Debug.Print(message);
         }
     }
 }
