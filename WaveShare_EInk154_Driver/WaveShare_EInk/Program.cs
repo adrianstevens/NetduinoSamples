@@ -15,21 +15,52 @@ namespace WaveShare_EInk
         {
             Debug.Print(Resources.GetString(Resources.StringResources.String1));
 
-            var epd = new Epd1in54();
-            var paint = new EpdPaint(new byte[1024], 200, 200);
+            var epd = new Epd1in54(chipSelectPin: Pins.GPIO_PIN_D4,
+                dcPin: Pins.GPIO_PIN_D7,
+                resetPin: Pins.GPIO_PIN_D6,
+                busyPin: Pins.GPIO_PIN_D5,
+                spiModule: SPI.SPI_module.SPI1,
+                speedKHz: 1500);
 
-            epd.BusyPin = new OutputPort(Cpu.Pin.GPIO_Pin7, false);
-            epd.ResetPin = new OutputPort(Cpu.Pin.GPIO_Pin6, false);
-            epd.DCPin = new OutputPort(Cpu.Pin.GPIO_Pin5, false);
-            epd.CSPin = new OutputPort(Cpu.Pin.GPIO_Pin10, false); 
-            
+            epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
+            epd.DisplayFrame();
+            epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
+            epd.DisplayFrame();
+
+            var paint = new EpdPaint(new byte[1024], 0, 0);
+
+            paint.SetRotate(0);
+
+            paint.SetWidth(64);
+            paint.SetHeight(64);
+
+            paint.Clear(UNCOLORED);
+            paint.DrawRectangle(0, 0, 40, 50, COLORED);
+            paint.DrawLine(0, 0, 40, 50, COLORED);
+            paint.DrawLine(40, 0, 0, 50, COLORED);
+         //   paint.DrawStringAt(30, 4, "N3 WiFi", Fonts.Fon, UNCOLORED);
+            epd.SetFrameMemory(paint.GetImage(), 16, 60, paint.GetWidth(), paint.GetHeight());
+
+
+
+            epd.DisplayFrame();
+
+            System.Threading.Thread.Sleep(2000);
+
+            epd.Init(Epd1in54.LUT_Partial_Update);
+
+            /*
+            paint.SetWidth(200);
+            paint.SetHeight(24);
+
             epd.Init(Epd1in54.LUT_Full_Update);
 
-            epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
+            epd.ClearFrameMemory(0);   // bit set = white, bit reset = black
             epd.DisplayFrame();
             epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
             epd.DisplayFrame();
 
+            /*
             paint.SetWidth(64);
             paint.SetHeight(64);
             paint.Clear(COLORED);
@@ -37,7 +68,8 @@ namespace WaveShare_EInk
             paint.DrawLine(0, 0, 40, 50, COLORED);
             paint.DrawLine(40, 0, 0, 50, COLORED);
             epd.SetFrameMemory(paint.GetImage(), 16, 60, paint.GetWidth(), paint.GetHeight());
-
+            */
+            System.Threading.Thread.Sleep(-1);
 
             /*    paint.SetRotate(EpdPaint.ROTATE_0);
 

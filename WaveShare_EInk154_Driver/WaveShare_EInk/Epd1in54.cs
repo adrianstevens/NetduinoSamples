@@ -1,5 +1,6 @@
 using System;
 using Microsoft.SPOT;
+using Microsoft.SPOT.Hardware;
 
 namespace WaveShare_EInk
 {
@@ -32,13 +33,13 @@ namespace WaveShare_EInk
         static byte SET_RAM_Y_ADDRESS_COUNTER = 0x4F;
         static byte TERMINATE_FRAME_READ_WRITE = 0xFF;
 
-        public static readonly byte[] LUT_Full_Update = 
+        public static readonly byte[] LUT_Full_Update =
         {
             0x02, 0x02, 0x01, 0x11, 0x12, 0x12, 0x22, 0x22,
             0x66, 0x69, 0x69, 0x59, 0x58, 0x99, 0x99, 0x88,
             0x00, 0x00, 0x00, 0x00, 0xF8, 0xB4, 0x13, 0x51,
             0x35, 0x51, 0x51, 0x19, 0x01, 0x00
-        }; 
+        };
 
         public static readonly byte[] LUT_Partial_Update =
         {
@@ -48,41 +49,70 @@ namespace WaveShare_EInk
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00
         };
 
-        public Epd1in54 ()
+        public Epd1in54(Cpu.Pin chipSelectPin, Cpu.Pin dcPin, Cpu.Pin resetPin, Cpu.Pin busyPin, SPI.SPI_module spiModule = SPI.SPI_module.SPI1, uint speedKHz = (uint)9500)
+            : base(chipSelectPin, dcPin, resetPin, busyPin, spiModule, speedKHz)
         {
+
 
         }
 
-        public void Init (byte[] lut) //something init string (defined below)
+        public void Init(byte[] lut) //something init string (defined below)
         {
-            base.Init();
+        
 
             Reset();
+
             SendCommand(DRIVER_OUTPUT_CONTROL);
-            SendData((EPD_HEIGHT - 1) & 0xFF);
-            SendData(((EPD_HEIGHT - 1) >> 8) & 0xFF);
+            SendData(199);
+            SendData(199 >> 8);
             SendData(0x00);                     // GD = 0; SM = 0; TB = 0;
+
             SendCommand(BOOSTER_SOFT_START_CONTROL);
             SendData(0xD7);
             SendData(0xD6);
             SendData(0x9D);
+
             SendCommand(WRITE_VCOM_REGISTER);
             SendData(0xA8);                     // VCOM 7C
+
             SendCommand(SET_DUMMY_LINE_PERIOD);
             SendData(0x1A);                     // 4 dummy lines per gate
+
             SendCommand(SET_GATE_TIME);
             SendData(0x08);                     // 2us per line
+
             SendCommand(DATA_ENTRY_MODE_SETTING);
             SendData(0x03);                     // X increment; Y increment
+
             SetLookUpTable(lut);
+
+
+
+            /*      SendCommand(DRIVER_OUTPUT_CONTROL);
+                  SendData((EPD_HEIGHT - 1) & 0xFF);
+                  SendData(((EPD_HEIGHT - 1) >> 8) & 0xFF);
+                  SendData(0x00);                     // GD = 0; SM = 0; TB = 0;
+                  SendCommand(BOOSTER_SOFT_START_CONTROL);
+                  SendData(0xD7);
+                  SendData(0xD6);
+                  SendData(0x9D);
+                  SendCommand(WRITE_VCOM_REGISTER);
+                  SendData(0xA8);                     // VCOM 7C
+                  SendCommand(SET_DUMMY_LINE_PERIOD);
+                  SendData(0x1A);                     // 4 dummy lines per gate
+                  SendCommand(SET_GATE_TIME);
+                  SendData(0x08);                     // 2us per line
+                  SendCommand(DATA_ENTRY_MODE_SETTING);
+                  SendData(0x03);                     // X increment; Y increment
+                  SetLookUpTable(lut);*/
 
             /* EPD hardware init end */
         }
 
         void SendCommand(byte command)
         {
-            DCPin.Write(false);
-            SpiTransfer(new byte[] { command });
+            dataCommandPort.Write(Command);
+            Write(command);
         }
 
         void SendData(int data)
@@ -92,34 +122,47 @@ namespace WaveShare_EInk
 
         void SendData(byte data)
         {
-            DCPin.Write(true);
-            SpiTransfer(new byte[] { data });
+            dataCommandPort.Write(Data);
+            Write(data);
         }
+
+        void SendData(byte[] data)
+        {
+            dataCommandPort.Write(Data);
+            spi.Write(data);
+        }
+
+        protected void Write(byte data)
+        {
+            spi.Write(new byte[] { data });
+        }
+
 
         void WaitUntilIdle()
         {
-            while (BusyPin.Read() == true)
+            while (busyPort.Read() == true)
             {
-                DelayMs(100);
+                DelayMs(50);
             }
         }
 
         void Reset()
         {
-            ResetPin.Write(false);
+            resetPort.Write(false);
             DelayMs(200);
-            ResetPin.Write(true);
+            resetPort.Write(true);
             DelayMs(200);
         }
 
         void SetLookUpTable(byte[] lookupTableData)
         {
             SendCommand(WRITE_LUT_REGISTER);
+            SendData(lookupTableData);
 
-            for(int i = 0; i < 30; i++)
+        /*    for(int i = 0; i < 30; i++)
             {
                 SendData(lookupTableData[i]);
-            }
+            }*/
         }
 
         public void SetFrameMemory(byte[] image_buffer,
