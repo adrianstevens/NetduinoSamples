@@ -22,7 +22,7 @@ namespace Netduino.Foundation.Displays
         protected OutputPort resetPort;
         protected SPI spi;
 
-        protected readonly byte[] spiBuffer;
+        protected byte[] spiBuffer;
 
         public PCD8544(Cpu.Pin chipSelectPin, Cpu.Pin dcPin, Cpu.Pin resetPin,
             SPI.SPI_module spiModule = SPI.SPI_module.SPI1,
@@ -84,14 +84,13 @@ namespace Netduino.Foundation.Displays
             Clear();
             Show();
         }
-
-
+        
         public override void Clear(bool updateDisplay = false)
         {
+            spiBuffer = new byte[Width * Height / 8];
+
             dataCommandPort.Write(false);
-
             spi.Write(new byte[] { 0x80, 0x40 });
-
             dataCommandPort.Write(true);
         }
 

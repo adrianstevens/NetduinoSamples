@@ -29,7 +29,7 @@ namespace Snake
             graphics.DrawText(0,0, "Snake!!");
             graphics.Show();
 
-            Thread.Sleep(1000);
+            Thread.Sleep(500);
 
             game = new SnakeGame(84, 48);
 
@@ -38,10 +38,10 @@ namespace Snake
 
         static void StartGameLoop ()
         {
-            graphics.DrawRectangle(0, 0, 84, 48, false, true);
-
             while (true)
             {
+                graphics.Clear();
+
                 game.Update();
                 //draw food
                 graphics.DrawPixel(game.FoodPosition.X, game.FoodPosition.Y);
@@ -53,6 +53,9 @@ namespace Snake
 
                     graphics.DrawPixel(point.X, point.Y);
                 }
+                
+                if(game.PlaySound)
+                    speaker.PlayTone(440, 25);
 
                 //show
                 graphics.Show();
