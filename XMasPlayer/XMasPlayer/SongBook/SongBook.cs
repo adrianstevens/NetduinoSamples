@@ -36,7 +36,7 @@ namespace XMasPlayer
             {
                 "E5", "Quarter", "E5", "Quarter", "E5", "Half",
                 "E5", "Quarter", "E5", "Quarter", "E5", "Half",
-                "E5", "Quarter", "G5", "Quarter", "C5", "Quarter","D5", "Quarter",
+                "E5", "Quarter", "G5", "Quarter", "C5", "Quarter", "D5", "Quarter",
                 "E5", "Whole",
 
                 "F5", "Quarter", "F5", "Quarter", "F5", "DottedQuarter", "F5", "Eighth",
@@ -44,9 +44,9 @@ namespace XMasPlayer
                 "E5", "Quarter", "D5", "Quarter", "D5", "Quarter", "E5", "Quarter",
                 "D5", "Half", "G5", "Half",
 
+                "E5", "Quarter", "E5", "Quarter", "E5", "Half",
                 "E5", "Quarter", "E5", "Quarter","E5", "Half",
-                "E5", "Quarter","E5", "Quarter","E5", "Half",
-                "E5", "Quarter","G5", "Quarter","C5", "Quarter","D5", "Quarter",
+                "E5", "Quarter", "G5", "Quarter","C5", "Quarter","D5", "Quarter",
                 "E5", "Whole",
 
                 "F5", "Quarter", "F5", "Quarter", "F5", "DottedQuarter", "F5", "Eighth",

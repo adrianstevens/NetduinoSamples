@@ -28,13 +28,19 @@ namespace XMasPlayer
 
         private void PlaySong(Song song)
         {
+            //smallest note length is a 32nd note 
+            //change value to adjust tempo 
             var len32Note = 1500 / 32;
 
+            //index of the currently playing note
             int melodyIndex = 0;
             int bassIndex = 0;
+
+            //remaining steps for the currently playing note
             int melodyRemaining = 0;
             int bassRemaining = 0;
-
+           
+            //loop until we've played every melody and bass note
             while (melodyIndex < song.Melody.Length && 
                    bassIndex < song.Bass.Length)
             {
@@ -43,8 +49,10 @@ namespace XMasPlayer
                     speakerMelody.StopTone();
                     ledMelody.IsOn = false;
 
+                    //get the length of the next note
                     melodyRemaining = song.Melody[melodyIndex].Length;
 
+                    //if the note isn't silence (i.e. don't play rests)
                     if (song.Melody[melodyIndex].Pitch != 0)
                     {
                         speakerMelody.PlayTone(song.Melody[melodyIndex].Pitch);
