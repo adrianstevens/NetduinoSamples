@@ -6,6 +6,7 @@ using Netduino.Foundation.Displays;
 using Netduino.Foundation.LEDs;
 using System.Threading;
 using Microsoft.SPOT.Hardware;
+using System;
 
 namespace BuzzerGame
 {
@@ -20,6 +21,10 @@ namespace BuzzerGame
 
         PiezoSpeaker speaker;
         GraphicsLibrary display;
+
+        DateTime gameStart;
+        TimeSpan timePlayed;
+
 
         //game variables
         int count;
@@ -46,6 +51,8 @@ namespace BuzzerGame
                 }
             });
             thread.Start();
+
+            ResetGame();
         }
 
         private void OnTouched ()
@@ -70,6 +77,7 @@ namespace BuzzerGame
         private void ResetGame ()
         {
             count = 0;
+            gameStart = DateTime.Now;
         }
 
         private void InitializePeripherals()
@@ -85,7 +93,7 @@ namespace BuzzerGame
 
             var ssd1306 = new SSD1306(0x3c, 400, SSD1306.DisplayType.OLED128x64);
             display = new GraphicsLibrary(ssd1306);
-            display.CurrentFont = new Font8x8();
+            display.CurrentFont = new Font8x12();
             
             display.Clear(true);
 
@@ -94,8 +102,10 @@ namespace BuzzerGame
 
         private void OnResetButton(object sender, EventArgs e)
         {
-            if(isPlaying == false)
+            if (isPlaying == false)
                 ResetGame();
+            else
+                timePlayed = (DateTime.Now - gameStart);
 
             isPlaying = !isPlaying;
 
@@ -111,15 +121,21 @@ namespace BuzzerGame
         {
             display.Clear();
 
-            display.DrawText(0, 0, 0, "XMas Buzzer");
-
             if (isPlaying)
             {
-                display.DrawText(0, 20, 0, "Count: " + count);
+                display.DrawText(0, 0, "XBuzzer - Play!");
+                display.DrawText(0, 20, "Count: " + count);
             }
             else
             {
-                display.DrawText(0, 20, 0, "** Paused **");
+                display.DrawText(0, 20, "Count: " + count);
+
+                string time = "Time:" + timePlayed.Minutes + ":";
+                if (timePlayed.Seconds < 10)
+                    time += "0";
+                time += timePlayed.Seconds;
+
+                display.DrawText(0, 0, time);
             }
             display.Show();
         }

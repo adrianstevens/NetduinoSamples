@@ -21,6 +21,6 @@ namespace System.Diagnostics
     {
         Never = 0,
         Collapsed = 2,
-        RootHidden = 3
+        RootHidden = 3,
     }
 }
